@@ -1,0 +1,40 @@
+name: Publish and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Clone repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Configurar Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # Instalar dependencias
+      - name: Install dependencies
+        run: npm install
+
+      # Ejecutar los tests
+      - name: Run tests
+        run: npm test
+
+  felicidades:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      # Solo continúa si los tests pasaron
+      - name: Felicitar
+        run: echo "Enhorabuena, has pasado todos los tests!"
