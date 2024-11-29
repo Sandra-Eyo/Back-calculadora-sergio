@@ -45,6 +45,12 @@ jobs:
   image-to-github:
     runs-on: ubuntu-latest
     needs: docker-image
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
