@@ -1,40 +1,61 @@
-name: Publish and Test
-
+name: CI/CD Workflow
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-
 jobs:
-  test:
+  test-and-lint:
     runs-on: ubuntu-latest
-
     steps:
-      # Clone repository
-      - name: Checkout repository
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+      - name: Dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Testeo
+        run: |
+          export PYTHONPATH=.
+          pytest
+      - name: Lint
+        run: ruff check .
+
+  docker-image:
+    runs-on: ubuntu-latest
+    needs: test-and-lint
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+      - name: Login en DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Build
+        run: docker build -t ${{ secrets.DOCKER_USER }}/back-calculadora:latest .
+      - name: Push
+        run: docker push ${{ secrets.DOCKER_USER }}/back-calculadora:latest
+
+  image-to-github:
+    runs-on: ubuntu-latest
+    needs: docker-image
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Configurar Node.js
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          node-version: '20'
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Instalar dependencias
-      - name: Install dependencies
-        run: npm install
-
-      # Ejecutar los tests
-      - name: Run tests
-        run: npm test
-
-  felicidades:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      # Solo continúa si los tests pasaron
-      - name: Felicitar
-        run: echo "Enhorabuena, has pasado todos los tests!"
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}/back-calculadora:latest
