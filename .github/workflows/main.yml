@@ -60,4 +60,4 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: ghcr.io/${{ github.repository }}/back-calculadora:latest
+          tags: ghcr.io/sandra-eyo/back-calculadora-sergio/back-calculadora:latest
