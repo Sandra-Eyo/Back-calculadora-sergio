@@ -22,7 +22,8 @@ jobs:
           export PYTHONPATH=.
           pytest
       - name: Lint
-        run: ruff check .
+        run: pip install ruff
+             ruff check .
 
   docker-image:
     runs-on: ubuntu-latest
